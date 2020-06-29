@@ -1,8 +1,8 @@
-import RootProvider from '../contexts/rootProvider';
+import { UserProvider } from "../contexts/userContext";
 
-const Layout = ({ children }) => {
+const Layout = ({ children, accessToken }) => {
   return (
-    <RootProvider>
+    <UserProvider accessToken={accessToken}>
       <div>
         {children}
         <style jsx global>{`
@@ -29,7 +29,7 @@ const Layout = ({ children }) => {
           }
         `}</style>
       </div>
-    </RootProvider>
+    </UserProvider>
   );
 };
 export default Layout;

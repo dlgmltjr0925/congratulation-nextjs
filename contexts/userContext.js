@@ -1,10 +1,10 @@
-import React, { useContext, useEffect } from 'react';
+import React, { useContext, useEffect } from "react";
 
-import { useImmer } from 'use-immer';
+import { useImmer } from "use-immer";
 
 const initialUser = {
   isLoggedIn: false,
-  accessToken: '',
+  accessToken: "",
 };
 
 const initialUserContextValue = {
@@ -13,9 +13,10 @@ const initialUserContextValue = {
 
 const UserContext = React.createContext();
 
-export const UserProvider = ({ children }) => {
-  console.log('UserProvider');
-  const [user, setUser] = useImmer(initialUser);
+export const UserProvider = ({ children, accessToken }) => {
+  const [user, setUser] = useImmer(
+    accessToken ? { isLoggedIn: true, accessToken } : initialUser
+  );
 
   const signin = () => {
     console.log(signin);

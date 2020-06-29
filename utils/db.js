@@ -1,11 +1,11 @@
-import { createToken, setSession } from './sessions';
+import { createToken, setSession } from "./sessions";
 
-import sqlite3 from 'sqlite3';
+import sqlite3 from "sqlite3";
 
 const db = new sqlite3.Database(
-  './assets/databases/congratutations.db',
+  "./assets/databases/congratutations.db",
   (err) => {
-    if (err) console.log('connect fail', err);
+    if (err) console.log("connect fail", err);
   }
 );
 
@@ -17,14 +17,118 @@ export const getUserInfo = async ({ id, password }) => {
       db.all(sql, (err, rows) => {
         if (err) reject(err);
         if (rows && rows[0]) {
-          const token = createToken();
-          setSession(token, {
-            ...rows[0],
-          });
+          const token = createToken(rows[0]);
           resolve(token);
         } else {
           resolve(null);
         }
+      });
+    } catch (error) {
+      reject(error);
+    }
+  });
+};
+
+export const insertEvent = async ({ targetName, content }) => {
+  return new Promise((resolve, reject) => {
+    try {
+      const now = new Date().valueOf();
+      // const sql = `INSERT INTO event(target_name, content, created_at, updated_at) VALUES ('${targetName}', '${content}', ${now}, ${now})`;
+      const insertSQL = `INSERT INTO event(target_name, content, created_at, updated_at) VALUES (?, ?, ?, ?)`;
+      const selectSQL = `SELECT * FROM event WHERE target_name=? AND content=? ORDER BY id DESC LIMIT 1;`;
+
+      db.serialize(() => {
+        db.run(insertSQL, [targetName, content, now, now], (err, rows) => {
+          if (err) reject(err);
+        });
+        db.all(selectSQL, [targetName, content], (err, rows) => {
+          if (err) reject(err);
+          resolve(rows[0]);
+        });
+      });
+    } catch (error) {
+      reject(error);
+    }
+  });
+};
+
+export const insertMessageCode = async ({ event }) => {
+  return new Promise((resolve, reject) => {
+    try {
+      const { id } = event;
+      const now = new Date().valueOf();
+      const insertSQL = `INSERT INTO message(event_id, code, created_at, updated_at) VALUES (?, ?, ?, ?)`;
+      const codes = [...new Array(50)].map(() =>
+        Math.random().toString(36).substr(2, 11)
+      );
+      console.log(codes);
+      db.serialize(() => {
+        for (const code of codes) {
+          db.run(insertSQL, [id, code, now, now]);
+        }
+      });
+    } catch (error) {
+      reject(error);
+    }
+  });
+};
+
+export const getEvents = async ({ offset, limit = 10 }) => {
+  return new Promise((resolve, reject) => {
+    try {
+      const selectSQL = `SELECT * FROM event ORDER BY id DESC LIMIT ?, ?`;
+      db.serialize(() => {
+        db.all(selectSQL, [offset, limit], (err, rows) => {
+          if (err) reject(err);
+          resolve(rows);
+        });
+      });
+    } catch (error) {
+      reject(error);
+    }
+  });
+};
+
+export const getEvent = async ({ targetName = "" }) => {
+  return new Promise((resolve, reject) => {
+    try {
+      const selectSQL = `SELECT * FROM event WHERE target_name=? ORDER BY id DESC LIMIT 1`;
+      db.serialize(() => {
+        db.all(selectSQL, [targetName], (err, rows) => {
+          if (err) reject(err);
+          if (rows.length === 0) reject("Not registered event");
+          else resolve(rows[0]);
+        });
+      });
+    } catch (error) {
+      reject(error);
+    }
+  });
+};
+
+export const deleteEvent = async ({ id }) => {
+  return new Promise((resolve, reject) => {
+    try {
+      const deleteSQL = `DELETE FROM event WHERE id=?`;
+      db.serialize(() => {
+        db.all(deleteSQL, [id], (err, rows) => {
+          if (err) reject(err);
+          resolve(id);
+        });
+      });
+    } catch (error) {
+      reject(error);
+    }
+  });
+};
+
+export const getCodes = async ({ id }) => {
+  return new Promise((resolve, reject) => {
+    try {
+      const selectSQL = `SELECT * FROM message WHERE event_id=?`;
+      db.all(selectSQL, [id], (err, rows) => {
+        if (err) reject(err);
+        resolve(rows);
       });
     } catch (error) {
       reject(error);

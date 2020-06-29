@@ -1,26 +1,20 @@
-import React, { useContext } from 'react';
-import { setCookies, useCookies } from 'react-cookie';
+import React, { useContext } from "react";
 
-import UserContext from '../contexts/userContext';
-import axios from 'axios';
-import { useCallback } from 'react';
-import { useImmer } from 'use-immer';
+import Event from "../../components/event";
+import UserContext from "../../contexts/userContext";
+import axios from "axios";
+import { useCallback } from "react";
+import { useImmer } from "use-immer";
 
 const Admin = () => {
-  console.log('Admin');
-  // const {
-  //   user: { isLoggedIn },
-  //   setUser,
-  // } = useContext(UserContext);
-
-  const [cookies, setCookies] = useCookies(['accessToken']);
-  console.log(cookies);
-
-  const user = useContext(UserContext);
+  const {
+    user: { isLoggedIn, accessToken },
+    setUser,
+  } = useContext(UserContext);
 
   const [loginInput, setLoginInput] = useImmer({
-    id: '',
-    password: '',
+    id: "",
+    password: "",
   });
 
   const _handleChangeId = useCallback(({ target: { value } }) => {
@@ -37,18 +31,18 @@ const Admin = () => {
 
   const _handleClickLoginButton = useCallback(async () => {
     try {
-      const res = await axios.get('/api/login', {
+      const res = await axios.get("/api/login", {
         params: loginInput,
       });
       if (res && res.data) {
         const { accessToken } = res.data;
-        user.setUser((draft) => {
+        setUser((draft) => {
           draft.isLoggedIn = true;
           draft.accessToken = accessToken;
         });
-        setCookie('accessToken', accessToken, { path: '/admin' });
+        document.cookie = `accessToken=${accessToken}; path=/admin`;
       } else {
-        alert('로그인에 실패하였습니다. 다시 시도해주세요.');
+        alert("로그인에 실패하였습니다. 다시 시도해주세요.");
       }
     } catch (error) {
       console.error(error);
@@ -57,27 +51,29 @@ const Admin = () => {
 
   return (
     <>
-      <div className='container'>
-        {user?.user?.isLoggedIn ? null : (
-          <div className='login-container'>
-            <div className='input-wrapper'>
+      <div className="container">
+        {isLoggedIn ? (
+          <Event />
+        ) : (
+          <div className="login-container">
+            <div className="input-wrapper">
               <p>ID</p>
               <input
-                type='text'
+                type="text"
                 value={loginInput.id}
                 onChange={_handleChangeId}
               />
             </div>
-            <div className='input-wrapper'>
+            <div className="input-wrapper">
               <p>PW</p>
               <input
-                type='password'
+                type="password"
                 value={loginInput.password}
                 onChange={_handleChangePassword}
               />
             </div>
             <p
-              className='login-button noselect'
+              className="login-button noselect"
               onClick={_handleClickLoginButton}
             >
               로그인

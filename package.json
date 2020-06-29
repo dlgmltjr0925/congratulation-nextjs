@@ -15,8 +15,10 @@
     "next": "9.4.4",
     "next-cookies": "^2.0.3",
     "react": "16.13.1",
+    "react-color": "^2.18.1",
     "react-cookie": "^4.0.3",
     "react-dom": "16.13.1",
+    "react-qr-code": "^1.0.2",
     "sqlite3": "^4.2.0",
     "use-immer": "^0.4.0"
   }

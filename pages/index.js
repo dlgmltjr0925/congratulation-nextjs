@@ -1,17 +1,13 @@
-import Head from 'next/head';
-import Layout from '../components/layout';
+import Head from "next/head";
+import Layout from "../components/layout";
 
 const Home = () => {
   return (
     <Layout>
-      <div className='container'>
-        <div className='container'>
-          <div className='content-wrapper noselect'>
-            <img src='https://cdn.ftoday.co.kr/news/photo/201704/71763_76298_1251.jpg' />
-            <div>
-              <h1>"Ben"</h1>
-              <h2>1주년을 축하드립니다.</h2>
-            </div>
+      <div className="container">
+        <div className="container">
+          <div className="content-wrapper noselect">
+            <img src="https://cdn.ftoday.co.kr/news/photo/201704/71763_76298_1251.jpg" />
           </div>
         </div>
 

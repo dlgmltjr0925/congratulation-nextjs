@@ -1,16 +1,16 @@
-import Head from 'next/head';
-import Layout from '../components/layout';
-import cookies from 'next-cookies';
+import Head from "next/head";
+import Layout from "../components/layout";
+import cookies from "next-cookies";
+import { checkValidToken } from "../utils/sessions";
 
-const App = ({ Component, pageProps }) => {
-  console.log('App');
+const App = ({ Component, pageProps, accessToken }) => {
   return (
     <div>
       <Head>
         <title>Congratulations!!</title>
-        <link rel='icon' href='/favicon.ico' />
+        <link rel="icon" href="/favicon.ico" />
       </Head>
-      <Layout>
+      <Layout accessToken={accessToken}>
         <Component {...pageProps} />
       </Layout>
     </div>
@@ -20,11 +20,24 @@ const App = ({ Component, pageProps }) => {
 App.getInitialProps = (context) => {
   const { ctx, Component } = context;
 
+  const cookies = {};
+
   const { cookie } = ctx.req.headers;
+  if (cookie) {
+    const [key, value] = cookie.split("=");
+    cookies[key] = value;
+  }
 
-  console.log(cookie);
+  if (cookies.accessToken) {
+    console.log(cookies.accessToken);
+    if (!checkValidToken(cookies.accessToken)) {
+      delete cookies.accessToken;
+    }
+  }
 
-  return {};
+  return {
+    accessToken: cookies.accessToken,
+  };
 };
 
 export default App;
