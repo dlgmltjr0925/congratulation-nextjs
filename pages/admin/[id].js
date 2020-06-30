@@ -36,7 +36,7 @@ const Event = () => {
   return (
     <div className="container">
       {codes.map((code) => {
-        const url = `http://192.168.100.3:3000/Ben?code=${code}`;
+        const url = `http://event.mazzeom.com/Ben?code=${code}`;
 
         return (
           <div key={url}>
