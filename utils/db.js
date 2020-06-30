@@ -158,28 +158,61 @@ export const updateMessage = async ({
   backgroundColor,
 }) => {
   return new Promise((resolve, reject) => {
-    console.log(id, to, message, from, backgroundColor);
+    const now = new Date().valueOf();
     try {
-      const updateSQL = `UPDATE message SET 'to'=?, message=?, 'from'=?, background_color=? WHERE id=?`;
+      const updateSQL = `UPDATE message SET 'to'=?, message=?, 'from'=?, background_color=?, updated_at=? WHERE id=?`;
       console.log(updateSQL);
       db.serialize(() => {
         db.run(
           updateSQL,
-          [to, message, from, backgroundColor, id],
+          [to, message, from, backgroundColor, now, id],
           (err, rows) => {
             if (err) resolve(null);
             resolve(true);
           }
         );
-        // db.run(
-        //   `update message set message = 'goodman' where id=51;`,
-        //   (err, rows) => {
-        //     console.log(err, rows);
-        //   }
-        // );
       });
     } catch (error) {
       console.log(error);
+      reject(error);
+    }
+  });
+};
+
+export const getMessages = async ({ targetName }) => {
+  return new Promise((resolve, reject) => {
+    try {
+      const selectSQL = `SELECT * FROM message WHERE event_id = (SELECT id FROM event WHERE target_name = ? ORDER BY id DESC LIMIT 1);`;
+      db.all(selectSQL, [targetName], (err, rows) => {
+        if (err) reject(err);
+        resolve(rows);
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  });
+};
+
+export const getMessageOpenedAt = async ({ id }) => {
+  return new Promise((resolve, reject) => {
+    try {
+      const selectSQL = `SELECT opened_at FROM message WHERE id=?`;
+      const updateSQL = `UPDATE message SET 'opened_at'=?, 'updated_at'=? WHERE id=?`;
+
+      db.serialize(() => {
+        db.all(selectSQL, [id], (err, rows) => {
+          if (err) reject(err);
+          if (rows[0].opened_at) resolve(rows[0].opened_at);
+          else {
+            const now = new Date().valueOf();
+            db.all(updateSQL, [now, now, id], (err, rows) => {
+              if (err) reject(err);
+              resolve(now);
+            });
+          }
+        });
+      });
+    } catch (error) {
       reject(error);
     }
   });

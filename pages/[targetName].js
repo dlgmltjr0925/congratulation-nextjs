@@ -139,7 +139,14 @@ const Target = () => {
           data: { result },
         } = res.data;
         if (result) {
-          alert("메시지가 등록 되었습니다.");
+          alert(
+            message.label === "메시지 등록"
+              ? "메시지가 등록 되었습니다."
+              : "메시지가 수정 되었습니다."
+          );
+          setMessage((draft) => {
+            draft.label = "메시지 수정";
+          });
         }
       }
     } catch (error) {
