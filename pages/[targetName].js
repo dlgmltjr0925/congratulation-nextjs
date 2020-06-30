@@ -1,46 +1,61 @@
-import { useRouter } from "next/router";
-import Layout from "../components/layout";
-import axios from "axios";
-import { useCallback, useEffect, useState, useMemo } from "react";
-import { useImmer } from "use-immer";
-import { SketchPicker } from "react-color";
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
-const getRandomBackgroundColor = () => {
-  const r = Math.floor(Math.random() * 255);
-  const g = Math.floor(Math.random() * 255);
-  const b = Math.floor(Math.random() * 255);
-  return `rgb(${r}, ${g}, ${b})`;
-};
+import Layout from '../components/layout';
+import { SketchPicker } from 'react-color';
+import axios from 'axios';
+import { useImmer } from 'use-immer';
+import { useRouter } from 'next/router';
 
 const Target = () => {
   const router = useRouter();
 
-  const { targetName, code = "0" } = router.query;
+  const { targetName, code = '0' } = router.query;
 
   const [event, setEvent] = useImmer({
     isLoading: true,
     targetName,
     content: null,
-    validCode: true,
+    validCode: false,
+    message: null,
+  });
+
+  const [message, setMessage] = useImmer({
+    to: '',
+    message: '',
+    from: '',
   });
 
   const getEvent = useCallback(async () => {
     try {
-      const res = await axios.get("/api/event/detail", {
+      const res = await axios.get('/api/event/detail', {
         params: {
           targetName,
           code,
         },
       });
+
+      console.log('res', res);
       if (res && res.data) {
         const { data } = res.data;
-        if (data && data.event && data.event !== "Not registered event") {
+        console.log(res.data);
+        if (data && data.event && data.event !== 'Not registered event') {
           setEvent((draft) => {
             draft.isLoading = false;
             draft.content = data.event.content;
+            if (data.message) {
+              draft.validCode = true;
+              draft.message = data.message;
+            }
           });
+          if (data.message) {
+            setMessage((draft) => {
+              draft.to = data.message.to;
+              draft.message = data.message.message;
+              draft.from = data.message.from;
+            });
+          }
         } else {
-          console.log("wrong access");
+          console.log('wrong access');
         }
       }
     } catch (error) {
@@ -52,15 +67,10 @@ const Target = () => {
     getEvent();
   }, []);
 
-  const [message, setMessage] = useImmer({
-    title: "",
-    body: "",
-  });
-
-  const _handleChangeMessageTitle = useCallback(
+  const _handleChangeMessageTo = useCallback(
     ({ target: { value } }) => {
       setMessage((draft) => {
-        draft.title = value;
+        draft.to = value;
       });
     },
     [message]
@@ -69,14 +79,23 @@ const Target = () => {
   const _handleChangeMessage = useCallback(
     ({ target: { value } }) => {
       setMessage((draft) => {
-        draft.body = value;
+        draft.message = value;
+      });
+    },
+    [message]
+  );
+
+  const _handleChangeMessageFrom = useCallback(
+    ({ target: { value } }) => {
+      setMessage((draft) => {
+        draft.from = value;
       });
     },
     [message]
   );
 
   const [color, setColor] = useImmer({
-    backgroundColor: "#ffffff",
+    backgroundColor: '#ffffff',
     visiblePicker: false,
   });
 
@@ -98,18 +117,12 @@ const Target = () => {
     [color]
   );
 
-  const colorPickerBg = useMemo(() => {
-    return getRandomBackgroundColor();
-  }, []);
-
-  console.log(colorPickerBg);
-
   return (
     <Layout>
-      <div className="container">
-        <div className="container">
-          <div className="content-wrapper noselect">
-            <img src="https://cdn.ftoday.co.kr/news/photo/201704/71763_76298_1251.jpg" />
+      <div className='container'>
+        <div className='container'>
+          <div className='content-wrapper noselect'>
+            <img src='https://cdn.ftoday.co.kr/news/photo/201704/71763_76298_1251.jpg' />
             {targetName && event.content && (
               <div>
                 <h1>{`"${targetName}"`}</h1>
@@ -119,14 +132,19 @@ const Target = () => {
           </div>
           {event.validCode && (
             <>
-              <p className="message-comment">{`"${targetName}"에게 축하메시지를 남겨 주세요.`}</p>
-              <div className="message-wrapper">
+              <p className='message-comment'>{`"${targetName}"에게 축하메시지를 남겨 주세요.`}</p>
+              <div className='message-wrapper'>
                 <div
-                  className="message-color-picker"
+                  className='message-color-picker'
                   onClick={_handleClickColorPicker}
-                />
+                >
+                  <div />
+                  <div />
+                  <div />
+                  {color.visiblePicker && <div>X</div>}
+                </div>
                 {color.visiblePicker && (
-                  <div className="sketch-picker">
+                  <div className='sketch-picker'>
                     <SketchPicker
                       color={color.backgroundColor}
                       onChangeComplete={_handleChangeCompleteColor}
@@ -134,21 +152,29 @@ const Target = () => {
                   </div>
                 )}
                 <input
-                  className="message-to"
-                  type="text"
-                  value={message.title}
-                  onChange={_handleChangeMessageTitle}
+                  className='message-to'
+                  type='text'
+                  value={message.to}
+                  onChange={_handleChangeMessageTo}
                   placeholder={`To. ${targetName}`}
                 />
-                <hr style={{ width: "100%" }} />
+                <hr style={{ width: '100%' }} />
                 <textarea
                   placeholder={event.content}
-                  value={message.body}
+                  value={message.message}
                   onChange={_handleChangeMessage}
                 />
+                <p className='message-from'>
+                  <input
+                    type='text'
+                    value={message.from}
+                    onChange={_handleChangeMessageFrom}
+                    placeholder='From. 인스테리어'
+                  />
+                </p>
               </div>
 
-              <div className="message-btn">메세지 전송</div>
+              <div className='message-btn'>메세지 전송</div>
             </>
           )}
         </div>
@@ -182,6 +208,20 @@ const Target = () => {
             background: transparent;
           }
 
+          .message-from {
+            text-align: right;
+            font-size: 16px;
+            line-height: 26px;
+          }
+
+          .message-from input {
+            width: 150px;
+            border: 0px;
+            background: transparent;
+            font-size: 16px;
+            line-height: 26px;
+          }
+
           .message-wrapper {
             position: relative;
             width: 340px;
@@ -200,8 +240,42 @@ const Target = () => {
             width: 30px;
             height: 30px;
             border-radius: 50%;
-            border: 2px solid ${color.visiblePicker ? "white" : "black"};
+            border: 2px solid ${color.visiblePicker ? 'white' : 'black'};
             background-color: ${color.backgroundColor};
+            display: flex;
+            flex-direction: row;
+            overflow: hidden;
+          }
+
+          .message-color-picker div {
+            display: flex;
+          }
+
+          .message-color-picker div:nth-child(1) {
+            background-color: #ff6666;
+            flex: 1.5;
+          }
+
+          .message-color-picker div:nth-child(2) {
+            background-color: #66ff66;
+            flex: 1;
+          }
+
+          .message-color-picker div:nth-child(3) {
+            background-color: #6666ff;
+            flex: 1.5;
+          }
+
+          .message-color-picker div:nth-child(4) {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #ffffff;
           }
 
           .sketch-picker {

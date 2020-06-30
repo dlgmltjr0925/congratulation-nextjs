@@ -1,11 +1,11 @@
-import { createToken, setSession } from "./sessions";
+import { createToken, setSession } from './sessions';
 
-import sqlite3 from "sqlite3";
+import sqlite3 from 'sqlite3';
 
 const db = new sqlite3.Database(
-  "./assets/databases/congratutations.db",
+  './assets/databases/congratutations.db',
   (err) => {
-    if (err) console.log("connect fail", err);
+    if (err) console.log('connect fail', err);
   }
 );
 
@@ -89,14 +89,14 @@ export const getEvents = async ({ offset, limit = 10 }) => {
   });
 };
 
-export const getEvent = async ({ targetName = "" }) => {
+export const getEvent = async ({ targetName = '' }) => {
   return new Promise((resolve, reject) => {
     try {
       const selectSQL = `SELECT * FROM event WHERE target_name=? ORDER BY id DESC LIMIT 1`;
       db.serialize(() => {
         db.all(selectSQL, [targetName], (err, rows) => {
           if (err) reject(err);
-          if (rows.length === 0) reject("Not registered event");
+          if (rows.length === 0) reject('Not registered event');
           else resolve(rows[0]);
         });
       });
@@ -132,6 +132,20 @@ export const getCodes = async ({ id }) => {
       });
     } catch (error) {
       reject(error);
+    }
+  });
+};
+
+export const getMessage = async ({ eventId, code }) => {
+  return new Promise((resolve, reject) => {
+    try {
+      const selectSQL = `SELECT * FROM message WHERE event_id=? AND code=?`;
+      db.all(selectSQL, [eventId, code], (err, rows) => {
+        if (err) resolve(null);
+        return resolve(rows[0]);
+      });
+    } catch (error) {
+      resolve(null);
     }
   });
 };
