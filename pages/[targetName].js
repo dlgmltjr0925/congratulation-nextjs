@@ -1,15 +1,15 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from "react";
 
-import Layout from '../components/layout';
-import { SketchPicker } from 'react-color';
-import axios from 'axios';
-import { useImmer } from 'use-immer';
-import { useRouter } from 'next/router';
+import Layout from "../components/layout";
+import { SketchPicker } from "react-color";
+import axios from "axios";
+import { useImmer } from "use-immer";
+import { useRouter } from "next/router";
 
 const Target = () => {
   const router = useRouter();
 
-  const { targetName, code = '0' } = router.query;
+  const { targetName, code = "0" } = router.query;
 
   const [event, setEvent] = useImmer({
     isLoading: true,
@@ -20,25 +20,27 @@ const Target = () => {
   });
 
   const [message, setMessage] = useImmer({
-    to: '',
-    message: '',
-    from: '',
+    to: "",
+    message: "",
+    from: "",
+    backgroundColor: "#ffffff",
+    label: "메시지 등록",
   });
 
   const getEvent = useCallback(async () => {
     try {
-      const res = await axios.get('/api/event/detail', {
+      const res = await axios.get("/api/event/detail", {
         params: {
           targetName,
           code,
         },
       });
 
-      console.log('res', res);
+      console.log("res", res);
       if (res && res.data) {
         const { data } = res.data;
         console.log(res.data);
-        if (data && data.event && data.event !== 'Not registered event') {
+        if (data && data.event && data.event !== "Not registered event") {
           setEvent((draft) => {
             draft.isLoading = false;
             draft.content = data.event.content;
@@ -48,14 +50,22 @@ const Target = () => {
             }
           });
           if (data.message) {
+            console.log(data.message);
             setMessage((draft) => {
-              draft.to = data.message.to;
-              draft.message = data.message.message;
-              draft.from = data.message.from;
+              const { to, message, from, background_color } = data.message;
+
+              draft.to = to || "";
+              draft.message = message || "";
+              draft.from = from || "";
+              draft.backgroundColor = background_color || "#ffffff";
+
+              if (to || message || from || background_color !== "#ffffff") {
+                draft.label = "메시지 수정";
+              }
             });
           }
         } else {
-          console.log('wrong access');
+          console.log("wrong access");
         }
       }
     } catch (error) {
@@ -95,7 +105,6 @@ const Target = () => {
   );
 
   const [color, setColor] = useImmer({
-    backgroundColor: '#ffffff',
     visiblePicker: false,
   });
 
@@ -110,19 +119,40 @@ const Target = () => {
 
   const _handleChangeCompleteColor = useCallback(
     (newColor) => {
-      setColor((draft) => {
+      setMessage((draft) => {
         draft.backgroundColor = newColor.hex;
+        console.log(newColor);
       });
     },
-    [color]
+    [message]
   );
+
+  const _handleClickUpload = useCallback(async () => {
+    try {
+      console.log(event.message);
+      const res = await axios.post("/api/event/upload", {
+        ...message,
+        id: event.message.id,
+      });
+      if (res && res.data) {
+        const {
+          data: { result },
+        } = res.data;
+        if (result) {
+          alert("메시지가 등록 되었습니다.");
+        }
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  }, [message, event]);
 
   return (
     <Layout>
-      <div className='container'>
-        <div className='container'>
-          <div className='content-wrapper noselect'>
-            <img src='https://cdn.ftoday.co.kr/news/photo/201704/71763_76298_1251.jpg' />
+      <div className="container">
+        <div className="container">
+          <div className="content-wrapper noselect">
+            <img src="https://cdn.ftoday.co.kr/news/photo/201704/71763_76298_1251.jpg" />
             {targetName && event.content && (
               <div>
                 <h1>{`"${targetName}"`}</h1>
@@ -132,10 +162,10 @@ const Target = () => {
           </div>
           {event.validCode && (
             <>
-              <p className='message-comment'>{`"${targetName}"에게 축하메시지를 남겨 주세요.`}</p>
-              <div className='message-wrapper'>
+              <p className="message-comment">{`"${targetName}"에게 축하메시지를 남겨 주세요.`}</p>
+              <div className="message-wrapper">
                 <div
-                  className='message-color-picker'
+                  className="message-color-picker"
                   onClick={_handleClickColorPicker}
                 >
                   <div />
@@ -144,37 +174,39 @@ const Target = () => {
                   {color.visiblePicker && <div>X</div>}
                 </div>
                 {color.visiblePicker && (
-                  <div className='sketch-picker'>
+                  <div className="sketch-picker">
                     <SketchPicker
-                      color={color.backgroundColor}
+                      color={message.backgroundColor}
                       onChangeComplete={_handleChangeCompleteColor}
                     />
                   </div>
                 )}
                 <input
-                  className='message-to'
-                  type='text'
+                  className="message-to"
+                  type="text"
                   value={message.to}
                   onChange={_handleChangeMessageTo}
                   placeholder={`To. ${targetName}`}
                 />
-                <hr style={{ width: '100%' }} />
+                <hr style={{ width: "100%" }} />
                 <textarea
                   placeholder={event.content}
                   value={message.message}
                   onChange={_handleChangeMessage}
                 />
-                <p className='message-from'>
+                <p className="message-from">
                   <input
-                    type='text'
+                    type="text"
                     value={message.from}
                     onChange={_handleChangeMessageFrom}
-                    placeholder='From. 인스테리어'
+                    placeholder="From. 에디트홈"
                   />
                 </p>
               </div>
 
-              <div className='message-btn'>메세지 전송</div>
+              <div className="message-btn" onClick={_handleClickUpload}>
+                {message.label}
+              </div>
             </>
           )}
         </div>
@@ -230,7 +262,7 @@ const Target = () => {
             flex-direction: column;
             padding: 10px;
             box-shadow: 5px 5px 10px grey;
-            background-color: ${color.backgroundColor};
+            background-color: ${message.backgroundColor};
           }
 
           .message-wrapper .message-color-picker {
@@ -240,8 +272,8 @@ const Target = () => {
             width: 30px;
             height: 30px;
             border-radius: 50%;
-            border: 2px solid ${color.visiblePicker ? 'white' : 'black'};
-            background-color: ${color.backgroundColor};
+            border: 2px solid ${color.visiblePicker ? "white" : "black"};
+            background-color: ${message.backgroundColor};
             display: flex;
             flex-direction: row;
             overflow: hidden;

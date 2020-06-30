@@ -34,9 +34,9 @@ const Event = () => {
   }, []);
 
   return (
-    <div>
+    <div className="container">
       {codes.map((code) => {
-        const url = `http://event.mazzeom.com/Ben?code=${code}`;
+        const url = `http://192.168.100.3:3000/Ben?code=${code}`;
 
         return (
           <div key={url}>
@@ -45,6 +45,11 @@ const Event = () => {
           </div>
         );
       })}
+      <style jsx>{`
+        .container {
+          padding-left: 30px;
+        }
+      `}</style>
     </div>
   );
 };

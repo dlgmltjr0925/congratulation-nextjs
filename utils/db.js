@@ -1,11 +1,11 @@
-import { createToken, setSession } from './sessions';
+import { createToken, setSession } from "./sessions";
 
-import sqlite3 from 'sqlite3';
+import sqlite3 from "sqlite3";
 
 const db = new sqlite3.Database(
-  './assets/databases/congratutations.db',
+  "./assets/databases/congratutations.db",
   (err) => {
-    if (err) console.log('connect fail', err);
+    if (err) console.log("connect fail", err);
   }
 );
 
@@ -89,14 +89,14 @@ export const getEvents = async ({ offset, limit = 10 }) => {
   });
 };
 
-export const getEvent = async ({ targetName = '' }) => {
+export const getEvent = async ({ targetName = "" }) => {
   return new Promise((resolve, reject) => {
     try {
       const selectSQL = `SELECT * FROM event WHERE target_name=? ORDER BY id DESC LIMIT 1`;
       db.serialize(() => {
         db.all(selectSQL, [targetName], (err, rows) => {
           if (err) reject(err);
-          if (rows.length === 0) reject('Not registered event');
+          if (rows.length === 0) reject("Not registered event");
           else resolve(rows[0]);
         });
       });
@@ -142,10 +142,45 @@ export const getMessage = async ({ eventId, code }) => {
       const selectSQL = `SELECT * FROM message WHERE event_id=? AND code=?`;
       db.all(selectSQL, [eventId, code], (err, rows) => {
         if (err) resolve(null);
-        return resolve(rows[0]);
+        resolve(rows[0]);
       });
     } catch (error) {
       resolve(null);
+    }
+  });
+};
+
+export const updateMessage = async ({
+  id,
+  to,
+  message,
+  from,
+  backgroundColor,
+}) => {
+  return new Promise((resolve, reject) => {
+    console.log(id, to, message, from, backgroundColor);
+    try {
+      const updateSQL = `UPDATE message SET 'to'=?, message=?, 'from'=?, background_color=? WHERE id=?`;
+      console.log(updateSQL);
+      db.serialize(() => {
+        db.run(
+          updateSQL,
+          [to, message, from, backgroundColor, id],
+          (err, rows) => {
+            if (err) resolve(null);
+            resolve(true);
+          }
+        );
+        // db.run(
+        //   `update message set message = 'goodman' where id=51;`,
+        //   (err, rows) => {
+        //     console.log(err, rows);
+        //   }
+        // );
+      });
+    } catch (error) {
+      console.log(error);
+      reject(error);
     }
   });
 };
